@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sideliners POS</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>Sideliners POS v2</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #2ecc71; --d: #1a1a1a; --l: #f8f9fa; }
-        body { font-family: sans-serif; margin: 0; background: var(--l); display: flex; flex-direction: column; height: 100vh; }
-        nav { background: var(--d); display: flex; justify-content: space-around; padding: 10px; }
-        nav button { background: none; border: none; color: #777; font-weight: bold; cursor: pointer; padding: 10px; }
-        nav button.active { color: var(--p); border-bottom: 2px solid var(--p); }
+        :root { --p: #2ecc71; --d: #1a1a1a; --l: #f4f4f4; --w: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--l); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        nav { background: var(--d); display: flex; justify-content: space-around; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        nav button { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        nav button.active { color: var(--p); border-bottom: 3px solid var(--p); }
         main { flex-grow: 1; padding: 15px; overflow-y: auto; }
         .page { display: none; } .page.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-p { background: var(--p); } .btn-a { background: #3498db; }
-        #reader { width: 100%; border-radius: 10px; overflow: hidden; margin-bottom: 10px; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
-        .total { font-size: 1.8rem; text-align: right; margin: 15px 0; }
+        .card { background: var(--w); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 1.1rem; outline: none; }
+        input:focus { border-color: var(--p); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-a { background: #3498db; color: white; margin-top: 10px; }
+        #reader { width: 100%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 15px; display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        .total { font-size: 2rem; text-align: right; margin: 15px 0; font-weight: bold; color: var(--d); }
     </style>
 </head>
 <body>
@@ -34,37 +36,37 @@
 <main>
     <div id="page-pos" class="page active">
         <div class="card">
-            <button onclick="toggleCamera()" style="margin-bottom:10px;">📷 Open Camera</button>
+            <button class="btn" style="background:#444; color:white; margin-bottom:10px;" onclick="toggleCamera()">📷 Start/Stop Camera</button>
             <div id="reader"></div>
-            <input type="text" id="pos-barcode" placeholder="Scan Barcode (Enter to add)..." autofocus>
+            <input type="text" id="pos-barcode" placeholder="Scan or Type Barcode..." autofocus>
         </div>
         <div class="card">
-            <h3>Cart</h3>
+            <h3>Checkout Cart</h3>
             <table id="cart-table">
-                <thead><tr><th>Item</th><th>Price</th></tr></thead>
+                <thead><tr><th>Product</th><th>Price</th></tr></thead>
                 <tbody id="cart-body"></tbody>
             </table>
             <div class="total">₱<span id="g-total">0.00</span></div>
-            <button class="btn btn-p" onclick="checkout()">CHECKOUT</button>
+            <button class="btn btn-p" onclick="checkout()">CHECKOUT TRANSACTION</button>
         </div>
     </div>
 
     <div id="page-inv" class="page">
         <div class="card">
-            <h3>Add Product</h3>
+            <h3>Inventory Entry</h3>
             <input type="text" id="inv-barcode" placeholder="Barcode ID">
-            <input type="text" id="inv-name" placeholder="Product Name">
+            <input type="text" id="inv-name" placeholder="Product Name (e.g. Sardines)">
             <input type="number" id="inv-price" placeholder="Price (₱)">
-            <input type="number" id="inv-stock" placeholder="Initial Stock">
-            <button class="btn btn-a" onclick="saveToDB()">SAVE TO DATABASE</button>
+            <input type="number" id="inv-stock" placeholder="Stocks Available">
+            <button class="btn btn-a" onclick="saveToDB()">SAVE PRODUCT</button>
         </div>
     </div>
 </main>
 
 <script>
-    // --- CONFIG ---
-    const SB_URL = 'PALITAN_ITO_NG_SUPABASE_URL';
-    const SB_KEY = 'PALITAN_ITO_NG_ANON_KEY';
+    // --- 1. CONFIG (PAALALA: Ilagay ang sariling Keys) ---
+    const SB_URL = 'YOUR_SUPABASE_URL';
+    const SB_KEY = 'YOUR_ANON_KEY';
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let cart = [];
@@ -75,85 +77,89 @@
         document.querySelectorAll('nav button').forEach(bt => bt.classList.remove('active'));
         document.getElementById('page-'+p).classList.add('active');
         document.getElementById('tab-'+p).classList.add('active');
-        if(p==='pos') document.getElementById('pos-barcode').focus();
+        // Auto-focus para sa PC Scanner
+        const input = p === 'pos' ? 'pos-barcode' : 'inv-barcode';
+        setTimeout(() => document.getElementById(input).focus(), 200);
     }
 
-    // --- SCANNER LOGIC ---
-    document.getElementById('pos-barcode').addEventListener('keypress', e => {
-        if(e.key === 'Enter') { addToCart(e.target.value); e.target.value = ''; }
+    // --- 2. SCANNER LOGIC (Fix for PC & Mobile) ---
+    const posInput = document.getElementById('pos-barcode');
+    posInput.addEventListener('keypress', e => {
+        if(e.key === 'Enter') { 
+            processScan(e.target.value); 
+            e.target.value = ''; 
+        }
     });
 
-    async function addToCart(bc) {
+    async function toggleCamera() {
+        const reader = document.getElementById('reader');
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+
+        if(reader.style.display === 'none' || !reader.style.display) {
+            reader.style.display = 'block';
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            html5QrCode.start({ facingMode: "environment" }, config, (text) => {
+                processScan(text);
+                // I-vibrate ang phone para malaman na scan success
+                if(navigator.vibrate) navigator.vibrate(100);
+            }).catch(err => alert("Camera Error: " + err));
+        } else {
+            html5QrCode.stop().then(() => reader.style.display = 'none');
+        }
+    }
+
+    // --- 3. DATABASE LOGIC ---
+    async function processScan(bc) {
+        // Check muna kung nasaan na page ang user
+        if(document.getElementById('page-inv').classList.contains('active')) {
+            document.getElementById('inv-barcode').value = bc;
+            return;
+        }
+
         const { data, error } = await _supabase.from('products').select('*').eq('barcode', bc).single();
         if(data) {
             cart.push(data);
             renderCart();
         } else {
-            alert("Product not found!");
+            alert("Barcode " + bc + " not found in Inventory!");
         }
     }
 
     function renderCart() {
         const b = document.getElementById('cart-body');
         let t = 0; b.innerHTML = '';
-        cart.forEach(i => { t += i.price; b.innerHTML += `<tr><td>${i.name}</td><td>₱${i.price}</td></tr>`; });
+        cart.forEach((i, idx) => { 
+            t += i.price; 
+            b.innerHTML += `<tr><td>${i.name}</td><td>₱${i.price}</td></tr>`; 
+        });
         document.getElementById('g-total').innerText = t.toFixed(2);
     }
 
-    // --- INVENTORY LOGIC ---
     async function saveToDB() {
         const bc = document.getElementById('inv-barcode').value;
         const nm = document.getElementById('inv-name').value;
         const pr = document.getElementById('inv-price').value;
         const st = document.getElementById('inv-stock').value;
 
+        if(!bc || !nm || !pr) return alert("Fill up all required fields!");
+
         const { error } = await _supabase.from('products').upsert({ barcode: bc, name: nm, price: pr, stock: st });
         if(!error) { 
-            alert("Saved!"); 
+            alert("✅ Product Saved!"); 
             ['inv-barcode','inv-name','inv-price','inv-stock'].forEach(id => document.getElementById(id).value='');
-        } else { alert(error.message); }
+        } else { alert("DB Error: " + error.message); }
     }
 
     async function checkout() {
-        if(cart.length === 0) return;
+        if(cart.length === 0) return alert("Cart is empty!");
         const total = cart.reduce((sum, i) => sum + i.price, 0);
+        // Save transaction to Supabase
         const { error } = await _supabase.from('sales').insert({ items: cart, total_amount: total });
         if(!error) {
-            alert("Paid: ₱" + total);
+            alert("💰 Paid: ₱" + total.toFixed(2));
             cart = []; renderCart();
         }
     }
-
-    async function toggleCamera() {
-    const r = document.getElementById('reader');
-    if(r.style.display === 'none' || !r.style.display) {
-        r.style.display = 'block';
-        
-        // Check muna kung may camera permission
-        try {
-            const devices = await Html5Qrcode.getCameras();
-            if (devices && devices.length) {
-                html5QrCode = new Html5Qrcode("reader");
-                await html5QrCode.start(
-                    { facingMode: "environment" }, // Mas mainam para sa likod na camera
-                    { fps: 10, qrbox: { width: 250, height: 150 } },
-                    (bc) => {
-                        if(document.getElementById('page-pos').classList.contains('active')) addToCart(bc);
-                        else document.getElementById('inv-barcode').value = bc;
-                        // Optional: Mag-beep dito pag naka-scan
-                    }
-                );
-            }
-        } catch (err) {
-            alert("Camera Error: " + err);
-            r.style.display = 'none';
-        }
-    } else {
-        await html5QrCode.stop();
-        r.style.display = 'none';
-    }
-}
-
 </script>
 </body>
 </html>
