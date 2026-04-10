@@ -1,205 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sideliners POS | Grocery & Inventory</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --primary: #2ecc71;
-      --dark: #1e1e1e;
-      --light: #f4f4f4;
-      --accent: #3498db;
-    }
-
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--light); display: flex; flex-direction: column; height: 100vh; }
-    
-    /* Navigation Tabs */
-    nav { background: var(--dark); display: flex; justify-content: space-around; padding: 10px; position: sticky; top: 0; z-index: 100; }
-    nav button { background: none; border: none; color: #888; font-weight: bold; padding: 10px; cursor: pointer; transition: 0.3s; }
-    nav button.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-
-    main { flex-grow: 1; overflow-y: auto; padding: 15px; }
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* Card Style */
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    
-    /* POS Styling */
-    .scanner-box { background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 15px; display: none; }
-    .input-barcode { width: 100%; padding: 15px; font-size: 1.2rem; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-    
-    .cart-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    .cart-table th { text-align: left; color: #888; font-size: 0.8rem; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .cart-table td { padding: 12px 0; border-bottom: 1px solid #eee; }
-
-    .total-section { font-size: 2rem; font-weight: bold; text-align: right; margin-top: 20px; color: var(--dark); }
-    .btn-main { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .btn-pay { background: var(--primary); color: white; }
-    .btn-save { background: var(--accent); color: white; margin-top: 10px; }
-
-    /* Inventory Form Styling */
-    label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
-    input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sideliners POS | Pro System</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --p: #2ecc71; --d: #1a1a1a; --l: #f4f4f4; --w: #ffffff; --s: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--l); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        nav { background: var(--d); display: flex; justify-content: space-around; padding: 12px; }
+        nav button { background: none; border: none; color: #888; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        nav button.active { color: var(--p); border-bottom: 3px solid var(--p); }
+        main { flex-grow: 1; padding: 15px; overflow-y: auto; }
+        .page { display: none; } .page.active { display: block; }
+        .card { background: var(--w); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 1.1rem; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 5px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        #reader { width: 100%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 15px; display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        .total { font-size: 2rem; text-align: right; margin: 15px 0; font-weight: bold; }
+        
+        /* Modal for Quantity */
+        #qty-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 80%; max-width: 400px; text-align: center; }
+    </style>
 </head>
 <body>
 
-  <nav>
+<nav>
     <button onclick="showPage('pos')" id="tab-pos" class="active">🛒 POS</button>
-    <button onclick="showPage('inventory')" id="tab-inventory">📦 INVENTORY</button>
-  </nav>
+    <button onclick="showPage('inv')" id="tab-inv">📦 INVENTORY</button>
+</nav>
 
-  <main>
+<main>
     <div id="page-pos" class="page active">
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3>Scan Items</h3>
-            <button onclick="toggleCamera()" style="background:#eee; border:none; padding:8px 15px; border-radius:8px;">📷 Toggle Camera</button>
+        <div class="card">
+            <button class="btn" style="background:#444; color:white;" onclick="toggleCamera()">📷 Toggle Camera</button>
+            <div id="reader"></div>
+            <input type="text" id="pos-barcode" placeholder="Scan Item Here..." autofocus>
         </div>
-        
-        <div id="reader" class="scanner-box"></div>
-        <input type="text" id="barcode-scan" class="input-barcode" placeholder="Ready for scan..." autofocus>
-      </div>
-
-      <div class="card">
-        <h3>Current Cart</h3>
-        <table class="cart-table">
-          <thead>
-            <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
-          </thead>
-          <tbody id="cart-body">
-            </tbody>
-        </table>
-        <div class="total-section">₱<span id="grand-total">0.00</span></div>
-        <button class="btn-main btn-pay" onclick="checkout()">CHECKOUT</button>
-      </div>
+        <div class="card">
+            <h3>Checkout Cart</h3>
+            <table>
+                <thead><tr><th>Product</th><th>Qty</th><th>Subtotal</th></tr></thead>
+                <tbody id="cart-body"></tbody>
+            </table>
+            <div class="total">₱<span id="g-total">0.00</span></div>
+            <button class="btn btn-p" onclick="checkout()">CHECKOUT</button>
+        </div>
     </div>
 
-    <div id="page-inventory" class="page">
-      <div class="card">
-        <h3>Add New Product</h3>
-        <p style="font-size: 0.8rem; color: #888;">Tip: I-scan ang barcode para automatic na mapuno ang field sa ibaba.</p>
-        
-        <label>Barcode ID</label>
-        <input type="text" id="inv-barcode" placeholder="Scan or Type Barcode">
-        
-        <label>Product Name</label>
-        <input type="text" id="inv-name" placeholder="e.g. Sardines 155g">
-        
-        <label>Price (₱)</label>
-        <input type="number" id="inv-price" placeholder="0.00">
-        
-        <label>Initial Stock</label>
-        <input type="number" id="inv-stock" placeholder="0">
-        
-        <button class="btn-main btn-save" onclick="saveToInventory()">SAVE TO DATABASE</button>
-      </div>
+    <div id="page-inv" class="page">
+        <div class="card">
+            <h3 id="inv-title">New Product Entry</h3>
+            <input type="text" id="inv-barcode" placeholder="Barcode ID">
+            <input type="text" id="inv-name" placeholder="Product Name">
+            <input type="number" id="inv-price" placeholder="Price (₱)">
+            <input type="number" id="inv-stock" placeholder="Stocks">
+            <button class="btn btn-s" onclick="saveToDB()">SAVE TO DATABASE</button>
+        </div>
     </div>
-  </main>
+</main>
 
-  <script>
+<div id="qty-modal">
+    <div class="modal-content">
+        <h2 id="m-name">Product Name</h2>
+        <p>Price: ₱<span id="m-price">0</span></p>
+        <label>Ilang piraso/kilo?</label>
+        <input type="number" id="m-qty" value="1" min="1">
+        <button class="btn btn-p" onclick="confirmAdd()">ADD TO CART</button>
+        <button class="btn" onclick="closeModal()" style="background:#eee;">Cancel</button>
+    </div>
+</div>
+
+<script>
+    // CONFIG: Palitan ng sariling keys
+    const SB_URL = 'YOUR_SUPABASE_URL';
+    const SB_KEY = 'YOUR_ANON_KEY';
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
     let cart = [];
-    let html5QrCode;
+    let tempProduct = null;
+    let html5QrCode = null;
 
-    // --- Tab Switching ---
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      document.getElementById('page-' + pageId).classList.add('active');
-      document.getElementById('tab-' + pageId).classList.add('active');
-      if(pageId === 'pos') document.getElementById('barcode-scan').focus();
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(bt => bt.classList.remove('active'));
+        document.getElementById('page-'+p).classList.add('active');
+        document.getElementById('tab-'+p).classList.add('active');
+        const inputId = (p === 'pos') ? 'pos-barcode' : 'inv-barcode';
+        setTimeout(() => document.getElementById(inputId).focus(), 300);
     }
 
-    // --- Scanner Logic ---
-    const barcodeInput = document.getElementById('barcode-scan');
-    barcodeInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        addToCart(e.target.value);
-        e.target.value = '';
-      }
+    // SCANNER INPUT (PC/Manual)
+    document.getElementById('pos-barcode').addEventListener('keypress', e => {
+        if(e.key === 'Enter') { handleScan(e.target.value); e.target.value = ''; }
     });
 
-    function toggleCamera() {
-      const readerDiv = document.getElementById('reader');
-      if (readerDiv.style.display === 'none' || !readerDiv.style.display) {
-        readerDiv.style.display = 'block';
-        startScanner();
-      } else {
-        html5QrCode.stop().then(() => { readerDiv.style.display = 'none'; });
-      }
-    }
+    async function handleScan(bc) {
+        // Hanapin sa DB
+        const { data, error } = await _supabase.from('products').select('*').eq('barcode', bc).single();
 
-    function startScanner() {
-      html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-        (text) => { 
-          // Check kung nasaan na page ang user
-          if(document.getElementById('page-pos').classList.contains('active')) {
-            addToCart(text);
-          } else {
-            document.getElementById('inv-barcode').value = text;
-          }
+        if (data) {
+            // MERON SA RECORD: Labas ang Quantity Modal
+            tempProduct = data;
+            document.getElementById('m-name').innerText = data.name;
+            document.getElementById('m-price').innerText = data.price;
+            document.getElementById('m-qty').value = 1;
+            document.getElementById('qty-modal').style.display = 'flex';
+            document.getElementById('m-qty').focus();
+        } else {
+            // WALA SA RECORD: Lipat sa Inventory, Fill-up agad ang Barcode
+            alert("⚠️ Product not found! Please save it first.");
+            document.getElementById('inv-barcode').value = bc;
+            showPage('inv');
         }
-      );
     }
 
-    // --- POS & Cart Logic ---
-    function addToCart(barcode) {
-      // Temporary Sample Data (Kukunin natin sa Supabase mamaya)
-      const mockDB = {
-        "123": { name: "Coke Solo", price: 20 },
-        "456": { name: "Piattos", price: 18 }
-      };
-
-      const product = mockDB[barcode];
-      if (product) {
-        cart.push(product);
+    function confirmAdd() {
+        const qty = parseInt(document.getElementById('m-qty').value);
+        if(qty <= 0) return alert("Dapat lagpas zero!");
+        
+        const subtotal = tempProduct.price * qty;
+        cart.push({ ...tempProduct, qty, subtotal });
+        
         renderCart();
-      } else {
-        alert("Product not found! Add it in Inventory first.");
-      }
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('qty-modal').style.display = 'none';
+        document.getElementById('pos-barcode').focus();
     }
 
     function renderCart() {
-      const body = document.getElementById('cart-body');
-      const totalDisplay = document.getElementById('grand-total');
-      body.innerHTML = '';
-      let total = 0;
-
-      cart.forEach(item => {
-        total += item.price;
-        body.innerHTML += `<tr><td>${item.name}</td><td>1</td><td>₱${item.price.toFixed(2)}</td></tr>`;
-      });
-      totalDisplay.innerText = total.toFixed(2);
+        const b = document.getElementById('cart-body');
+        let t = 0; b.innerHTML = '';
+        cart.forEach(i => {
+            t += i.subtotal;
+            b.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td>₱${i.subtotal.toFixed(2)}</td></tr>`;
+        });
+        document.getElementById('g-total').innerText = t.toFixed(2);
     }
 
-    // --- Database Simulation ---
-    function saveToInventory() {
-        const data = {
-            barcode: document.getElementById('inv-barcode').value,
-            name: document.getElementById('inv-name').value,
-            price: document.getElementById('inv-price').value,
-            stock: document.getElementById('inv-stock').value
-        };
-        console.log("Saving to Supabase:", data);
-        alert("Saved: " + data.name);
-        // Clear fields
-        document.getElementById('inv-barcode').value = '';
-        document.getElementById('inv-name').value = '';
-        document.getElementById('inv-price').value = '';
-        document.getElementById('inv-stock').value = '';
+    async function saveToDB() {
+        const bc = document.getElementById('inv-barcode').value;
+        const nm = document.getElementById('inv-name').value;
+        const pr = document.getElementById('inv-price').value;
+        const st = document.getElementById('inv-stock').value;
+
+        const { error } = await _supabase.from('products').upsert({ barcode: bc, name: nm, price: pr, stock: st });
+        if(!error) {
+            alert("✅ Saved!");
+            ['inv-barcode','inv-name','inv-price','inv-stock'].forEach(id => document.getElementById(id).value='');
+            showPage('pos');
+        } else { alert("Error: " + error.message); }
     }
 
-    function checkout() {
-        if(cart.length === 0) return alert("Walang laman ang cart!");
-        alert("Transaction Success! Alert sent to Telegram.");
-        cart = [];
-        renderCart();
+    async function toggleCamera() {
+        const r = document.getElementById('reader');
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+
+        if(r.style.display === 'none' || !r.style.display) {
+            r.style.display = 'block';
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (bc) => {
+                handleScan(bc);
+                if(navigator.vibrate) navigator.vibrate(100);
+            }).catch(err => alert("Camera Error: " + err));
+        } else {
+            html5QrCode.stop().then(() => r.style.display = 'none');
+        }
     }
-  </script>
+
+    async function checkout() {
+        if(cart.length === 0) return alert("Empty Cart!");
+        const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
+        const { error } = await _supabase.from('sales').insert({ items: cart, total_amount: total });
+        if(!error) {
+            alert("💰 Checkout Success: ₱" + total.toFixed(2));
+            cart = []; renderCart();
+        }
+    }
+</script>
 </body>
 </html>
