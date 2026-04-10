@@ -91,22 +91,44 @@
         }
     });
 
-    async function toggleCamera() {
-        const reader = document.getElementById('reader');
-        if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-
-        if(reader.style.display === 'none' || !reader.style.display) {
-            reader.style.display = 'block';
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-            html5QrCode.start({ facingMode: "environment" }, config, (text) => {
-                processScan(text);
-                // I-vibrate ang phone para malaman na scan success
-                if(navigator.vibrate) navigator.vibrate(100);
-            }).catch(err => alert("Camera Error: " + err));
-        } else {
-            html5QrCode.stop().then(() => reader.style.display = 'none');
-        }
+async function toggleCamera() {
+    const r = document.getElementById('reader');
+    
+    // I-initialize ang scanner kung wala pa
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
     }
+
+    if(r.style.display === 'none' || !r.style.display) {
+        r.style.display = 'block';
+        
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 150 },
+            aspectRatio: 1.0 
+        };
+
+        // Subukan muna i-start ang camera
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            (bc) => {
+                if(document.getElementById('page-pos').classList.contains('active')) addToCart(bc);
+                else document.getElementById('inv-barcode').value = bc;
+                if(navigator.vibrate) navigator.vibrate(100);
+            }
+        ).catch(err => {
+            console.error(err);
+            alert("Camera Error: Baka naka-block o gamit ng ibang app.");
+            r.style.display = 'none';
+        });
+    } else {
+        html5QrCode.stop().then(() => {
+            r.style.display = 'none';
+        }).catch(err => console.log("Stop error", err));
+    }
+}
+
 
     // --- 3. DATABASE LOGIC ---
     async function processScan(bc) {
