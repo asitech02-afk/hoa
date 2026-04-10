@@ -124,19 +124,36 @@
         }
     }
 
-    function toggleCamera() {
-        const r = document.getElementById('reader');
-        if(r.style.display === 'none' || !r.style.display) {
-            r.style.display = 'block';
-            html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, bc => {
-                if(document.getElementById('page-pos').classList.contains('active')) addToCart(bc);
-                else document.getElementById('inv-barcode').value = bc;
-            });
-        } else {
-            html5QrCode.stop().then(() => r.style.display = 'none');
+    async function toggleCamera() {
+    const r = document.getElementById('reader');
+    if(r.style.display === 'none' || !r.style.display) {
+        r.style.display = 'block';
+        
+        // Check muna kung may camera permission
+        try {
+            const devices = await Html5Qrcode.getCameras();
+            if (devices && devices.length) {
+                html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start(
+                    { facingMode: "environment" }, // Mas mainam para sa likod na camera
+                    { fps: 10, qrbox: { width: 250, height: 150 } },
+                    (bc) => {
+                        if(document.getElementById('page-pos').classList.contains('active')) addToCart(bc);
+                        else document.getElementById('inv-barcode').value = bc;
+                        // Optional: Mag-beep dito pag naka-scan
+                    }
+                );
+            }
+        } catch (err) {
+            alert("Camera Error: " + err);
+            r.style.display = 'none';
         }
+    } else {
+        await html5QrCode.stop();
+        r.style.display = 'none';
     }
+}
+
 </script>
 </body>
 </html>
