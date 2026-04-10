@@ -3,170 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homeowner Portal</title>
+  <title>Grocery POS | Scanner Support</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root {
-      --bg-dark: #121212;
-      --card-bg: #1e1e1e;
-      --primary: #007bff;
-      --text: #ffffff;
+      --bg: #f0f2f5;
+      --dark: #1a1a1a;
+      --primary: #2ecc71;
+      --accent: #e74c3c;
     }
 
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      display: flex;
-      flex-direction: row; /* Default for Desktop */
-    }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+    
+    header { background: var(--dark); color: white; padding: 15px; text-align: center; display: flex; justify-content: space-between; align-items: center; }
 
-    /* Sidebar Navigation - Desktop First */
-    nav {
-      width: 250px;
-      min-height: 100vh;
-      background-color: var(--card-bg);
-      padding: 20px;
-      border-right: 1px solid #333;
-      transition: 0.3s;
-    }
+    .main-container { display: grid; grid-template-columns: 1fr 380px; flex-grow: 1; overflow: hidden; }
 
-    nav h2 { color: var(--primary); text-align: center; margin-bottom: 30px; }
+    /* Left Side: Scanning & Search */
+    .scanner-section { padding: 20px; overflow-y: auto; background: white; }
+    
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 10px; overflow: hidden; display: none; } /* Hidden by default */
 
-    nav ul { list-style: none; padding: 0; }
+    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    input#barcode-input { flex-grow: 1; padding: 15px; font-size: 1.2rem; border: 2px solid #ddd; border-radius: 8px; }
 
-    nav ul li {
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
+    /* Right Side: Cart */
+    .cart-section { background: #fff; border-left: 2px solid #ddd; display: flex; flex-direction: column; padding: 20px; }
+    .cart-items { flex-grow: 1; overflow-y: auto; }
+    .cart-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+    
+    .total-box { font-size: 2rem; font-weight: bold; text-align: right; margin: 20px 0; color: var(--primary); }
+    .btn-checkout { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 10px; font-size: 1.5rem; cursor: pointer; }
 
-    nav ul li:hover { background-color: #2c2c2c; color: var(--primary); }
-
-    /* Main Content Area */
-    main {
-      flex-grow: 1;
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 { font-size: 1.8rem; margin-top: 0; }
-
-    .dashboard-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .card {
-      background-color: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      border-left: 5px solid var(--primary);
-    }
-
-    .card h3 { margin: 0; font-size: 1rem; color: #aaa; }
-    .card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0; }
-
-    .announcement {
-      margin-top: 25px;
-      background-color: #2c2c2c;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #444;
-    }
-
-    .status-paid { color: #28a745; font-size: 0.9rem; }
-
-    /* --- MOBILE RESPONSIVE QUERIES --- */
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column; /* Stack vertically on mobile */
-      }
-
-      nav {
-        width: 100%;
-        min-height: auto;
-        height: auto;
-        padding: 10px;
-        border-right: none;
-        border-bottom: 1px solid #333;
-      }
-
-      nav h2 { margin-bottom: 10px; font-size: 1.2rem; }
-
-      /* Gawing Horizontal Scroll ang Menu sa Mobile para tipid sa space */
-      nav ul {
-        display: flex;
-        overflow-x: auto;
-        padding-bottom: 5px;
-        gap: 10px;
-      }
-
-      nav ul li {
-        white-space: nowrap; /* Hindi bababa ang text */
-        padding: 10px 15px;
-        font-size: 0.9rem;
-        background-color: #2c2c2c;
-      }
-
-      main {
-        padding: 20px 15px;
-      }
-
-      .dashboard-cards {
-        grid-template-columns: 1fr; /* Isang column lang sa maliit na screen */
-      }
-      
-      h1 { font-size: 1.5rem; }
-    }
+    @media (max-width: 768px) { .main-container { grid-template-columns: 1fr; } .cart-section { height: 400px; } }
   </style>
 </head>
 <body>
 
-  <nav>
-    <h2>HOA Portal</h2>
-    <ul>
-      <li>Dashboard</li>
-      <li>My Profile</li>
-      <li>Monthly Dues</li>
-      <li>Facility Booking</li>
-      <li>Complaints</li>
-    </ul>
-  </nav>
+  <header>
+    <span>🛒 GROCERY POS</span>
+    <button onclick="toggleCamera()" style="padding: 10px; border-radius: 5px; cursor: pointer;">📷 Open Camera</button>
+  </header>
 
-  <main>
-    <h1>Welcome, Homeowner!</h1>
-    <p style="color: #888;">Subdivision: <strong>Green Valley Estates</strong></p>
+  <div class="main-container">
+    <div class="scanner-section">
+      <div id="reader"></div>
 
-    <div class="dashboard-cards">
-      <div class="card">
-        <h3>Current Balance</h3>
-        <p>₱0.00</p>
-        <span class="status-paid">● Status: Paid</span>
+      <div class="input-group">
+        <input type="text" id="barcode-input" placeholder="Scan Barcode or Type Code..." autofocus>
       </div>
-      <div class="card">
-        <h3>Next Event</h3>
-        <p>Apr 15</p>
-        <span>General Assembly</span>
-      </div>
-      <div class="card">
-        <h3>Visitor Pass</h3>
-        <p>3</p>
-        <span>Active Today</span>
+
+      <div id="product-info" style="padding: 20px; background: #f9f9f9; border-radius: 10px; text-align: center;">
+        <h3>Handa na sa Pag-scan</h3>
+        <p>I-scan ang barcode gamit ang scanner o i-type sa box sa itaas.</p>
       </div>
     </div>
 
-    <div class="announcement">
-      <h3>📢 Latest Announcement</h3>
-      <p>Magkakaroon ng water interruption sa darating na Sabado (April 11) mula 8:00 AM hanggang 5:00 PM para sa maintenance ng main pump.</p>
+    <div class="cart-section">
+      <h3>Checkout List</h3>
+      <div class="cart-items" id="cart-list"></div>
+      <div class="total-box">₱<span id="grand-total">0.00</span></div>
+      <button class="btn-checkout" onclick="checkout()">BAYAD</button>
     </div>
-  </main>
+  </div>
 
+  <script>
+    let cart = [];
+    let html5QrCode;
+
+    // --- PC Plug-and-Play Scanner Logic ---
+    const barcodeInput = document.getElementById('barcode-input');
+    barcodeInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const barcode = e.target.value;
+        findProduct(barcode);
+        e.target.value = ''; // Clear input after scan
+      }
+    });
+
+    // --- Mobile Camera Scanner Logic ---
+    function toggleCamera() {
+      const readerDiv = document.getElementById('reader');
+      if (readerDiv.style.display === 'none' || readerDiv.style.display === '') {
+        readerDiv.style.display = 'block';
+        startCamera();
+      } else {
+        html5QrCode.stop().then(() => { readerDiv.style.display = 'none'; });
+      }
+    }
+
+    function startCamera() {
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        findProduct(decodedText);
+      });
+    }
+
+    // --- Product Logic (Dito ikokonekta ang Supabase mamaya) ---
+    function findProduct(barcode) {
+      // Sample Data - Sa susunod na step, ito ay galing na sa Supabase
+      const inventory = {
+        "123456": { name: "Lucky Me Noodles", price: 15.00 },
+        "789012": { name: "Coke 1.5L", price: 65.00 },
+        "001122": { name: "Sardines (555)", price: 22.00 }
+      };
+
+      const product = inventory[barcode];
+      if (product) {
+        cart.push(product);
+        updateUI();
+      } else {
+        alert("Product with Barcode " + barcode + " not found!");
+      }
+    }
+
+    function updateUI() {
+      const cartList = document.getElementById('cart-list');
+      const totalDisplay = document.getElementById('grand-total');
+      cartList.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        total += item.price;
+        cartList.innerHTML += `
+          <div class="cart-row">
+            <span>${item.name}</span>
+            <span>₱${item.price.toFixed(2)}</span>
+          </div>`;
+      });
+      totalDisplay.innerText = total.toFixed(2);
+    }
+
+    function checkout() {
+      if(cart.length === 0) return alert("Empty Cart!");
+      alert("Success! Transaction Sent to Telegram.");
+      cart = [];
+      updateUI();
+    }
+  </script>
 </body>
 </html>
