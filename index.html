@@ -1,78 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOA Portal - Register</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f7f6; }
-        .register-card { max-width: 450px; margin: 50px auto; border: none; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .btn-primary { background-color: #2c3e50; border: none; }
-        .btn-primary:hover { background-color: #34495e; }
-        .header-bg { background: #2c3e50; color: white; border-radius: 15px 15px 0 0; padding: 20px; text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homeowner Portal</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --primary: #007bff;
+      --text: #ffffff;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: row; /* Default for Desktop */
+    }
+
+    /* Sidebar Navigation - Desktop First */
+    nav {
+      width: 250px;
+      min-height: 100vh;
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-right: 1px solid #333;
+      transition: 0.3s;
+    }
+
+    nav h2 { color: var(--primary); text-align: center; margin-bottom: 30px; }
+
+    nav ul { list-style: none; padding: 0; }
+
+    nav ul li {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    nav ul li:hover { background-color: #2c2c2c; color: var(--primary); }
+
+    /* Main Content Area */
+    main {
+      flex-grow: 1;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.8rem; margin-top: 0; }
+
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border-left: 5px solid var(--primary);
+    }
+
+    .card h3 { margin: 0; font-size: 1rem; color: #aaa; }
+    .card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0; }
+
+    .announcement {
+      margin-top: 25px;
+      background-color: #2c2c2c;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #444;
+    }
+
+    .status-paid { color: #28a745; font-size: 0.9rem; }
+
+    /* --- MOBILE RESPONSIVE QUERIES --- */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column; /* Stack vertically on mobile */
+      }
+
+      nav {
+        width: 100%;
+        min-height: auto;
+        height: auto;
+        padding: 10px;
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+
+      nav h2 { margin-bottom: 10px; font-size: 1.2rem; }
+
+      /* Gawing Horizontal Scroll ang Menu sa Mobile para tipid sa space */
+      nav ul {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 5px;
+        gap: 10px;
+      }
+
+      nav ul li {
+        white-space: nowrap; /* Hindi bababa ang text */
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        background-color: #2c2c2c;
+      }
+
+      main {
+        padding: 20px 15px;
+      }
+
+      .dashboard-cards {
+        grid-template-columns: 1fr; /* Isang column lang sa maliit na screen */
+      }
+      
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card register-card">
-        <div class="header-bg">
-            <h3 class="mb-0">HOA Portal</h3>
-            <small>Homeowner Registration</small>
-        </div>
-        <div class="card-body p-4">
-            <form id="registrationForm">
-                <div class="mb-3">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="fullName" class="form-control" placeholder="Juan Dela Cruz" required>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Block & Lot Number</label>
-                    <input type="text" id="address" class="form-control" placeholder="Blk 1 Lot 2" required>
-                </div>
+  <nav>
+    <h2>HOA Portal</h2>
+    <ul>
+      <li>Dashboard</li>
+      <li>My Profile</li>
+      <li>Monthly Dues</li>
+      <li>Facility Booking</li>
+      <li>Complaints</li>
+    </ul>
+  </nav>
 
-                <div class="mb-3">
-                    <label class="form-label">Contact Number</label>
-                    <input type="tel" id="contact" class="form-control" placeholder="09123456789" required>
-                </div>
+  <main>
+    <h1>Welcome, Homeowner!</h1>
+    <p style="color: #888;">Subdivision: <strong>Green Valley Estates</strong></p>
 
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" id="email" class="form-control" placeholder="juan@email.com" required>
-                </div>
-
-                <hr>
-
-                <div class="mb-3">
-                    <label class="form-label">Create Username</label>
-                    <input type="text" id="username" class="form-control" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100 py-2">Submit Registration</button>
-            </form>
-        </div>
-        <div class="card-footer text-center bg-white border-0 pb-4">
-            <small class="text-muted">May account na? <a href="login.html">Mag-login dito</a></small>
-        </div>
+    <div class="dashboard-cards">
+      <div class="card">
+        <h3>Current Balance</h3>
+        <p>₱0.00</p>
+        <span class="status-paid">● Status: Paid</span>
+      </div>
+      <div class="card">
+        <h3>Next Event</h3>
+        <p>Apr 15</p>
+        <span>General Assembly</span>
+      </div>
+      <div class="card">
+        <h3>Visitor Pass</h3>
+        <p>3</p>
+        <span>Active Today</span>
+      </div>
     </div>
-</div>
 
-<script>
-    document.getElementById('registrationForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Dito natin ilalagay ang connection sa Telegram o Database mamaya
-        alert('Salamat sa pag-register! I-ve-verify muna namin ang inyong account.');
-        this.reset();
-    });
-</script>
+    <div class="announcement">
+      <h3>📢 Latest Announcement</h3>
+      <p>Magkakaroon ng water interruption sa darating na Sabado (April 11) mula 8:00 AM hanggang 5:00 PM para sa maintenance ng main pump.</p>
+    </div>
+  </main>
 
 </body>
 </html>
